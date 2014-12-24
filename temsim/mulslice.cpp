@@ -186,12 +186,14 @@ int main( int argc, char *argv[ ] )
         exit(0);
     }
     for(i=0; i<NCINMAX; i++) cin[i] = 0;
-
-    printf("Type in the stacking sequence :\n");
-    do {
+// Sequence format: 2(abc)d =>  1 2 3 1 2 3 4
+    printf("Type in the stacking sequence : 'a'\n");
+ /*   do {
        ns = scanf("%s", cin2 );
     }while( ( (cin2=strchr(cin,'-')) != NULL  )
-      && ( strlen(cin) < (NCINMAX-80) ) );
+      && ( strlen(cin) < (NCINMAX-80) ) );*/
+    ns = sscanf("a","%s", cin);
+
 
     layer = (int*) malloc1D( NSMAX, sizeof(int), "layer" );
 
@@ -215,15 +217,16 @@ int main( int argc, char *argv[ ] )
     for( i=0; i<nlayer; i++) {
        printf("Name of file with input atomic potential %c :\n",
              cname[i]);
-       ns = scanf("%s", filein[i] );
+       ns = sscanf("graphene.out","%s", filein[i] );
     }
 
     /*  get more file names etc. */
 
     printf("Name of file to get binary output of multislice result:\n");
-    ns = scanf("%s", fileout );
+    ns = sscanf("graphene.mul","%s", fileout );
 
-    lpartl = askYN("Do you want to include partial coherence");
+//    lpartl = askYN("Do you want to include partial coherence");
+    lpartl = 0;
 
     if( lpartl == 1 ) {
         printf("Illumination angle min, max in mrad:\n");
@@ -250,7 +253,8 @@ int main( int argc, char *argv[ ] )
         lstart = 0;
     } else {
         printf("NOTE, the program image must also be run.\n");
-        lstart = askYN("Do you want to start from previous result");
+        //lstart = askYN("Do you want to start from previous result");
+	lstart = 0;
     }
 
     if ( lstart == 1 ) {
@@ -258,22 +262,23 @@ int main( int argc, char *argv[ ] )
         ns = scanf("%s", filestart);
     } else {
         printf("Incident beam energy in kev:\n");
-        ns = scanf("%g", &v0);
+        ns = sscanf("80","%g", &v0);
     }
 
     printf("Crystal tilt x,y in mrad.:\n");
-    ns = scanf("%f %f", &ctiltx, &ctilty);
+    ns = sscanf("0 0","%f %f", &ctiltx, &ctilty);
     ctiltx = ctiltx * 0.001F;
     ctilty = ctilty * 0.001F;
 
     if( lpartl == 0 ) {
         printf("Incident beam tilt x,y in mrad.:\n");
-        ns = scanf("%f %f", &btiltx, &btilty);
+        ns = sscanf("0 0","%f %f", &btiltx, &btilty);
         btiltx = btiltx * 0.001F;
         btilty = btilty * 0.001F;
 
-        lbeams = askYN("Do you want to record the (real,imag) value\n"
-            " of selected beams vs. thickness");
+        /*lbeams = askYN("Do you want to record the (real,imag) value\n"
+            " of selected beams vs. thickness");*/
+	lbeams = 0;
         if( lbeams == 1 ) {
             printf("Name of file for beams info:\n");
             ns = scanf("%s", filebeam );

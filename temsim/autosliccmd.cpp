@@ -550,7 +550,8 @@ int main()
     }
 
     i = myFile.write( fileout.c_str(), rmin, rmax, aimin, aimax, dx, dy );
-    if( i != 1 ) cout << "autoslice cannot write TIF file " << fileout << endl;
+    if( i != 1 ) cout << "autoslice cannot write TIF file " << fileout << 
+		endl <<"file.write: " << i << endl;
     cout << "pix range " << rmin << " to " << rmax << " real,\n" <<
             "          " << aimin << " to " << aimax << " imag" << endl;
 
@@ -572,7 +573,7 @@ int main()
         i = myFile.write( filecross.c_str(), rmin, rmax, aimin, aimax, dx, dy );
 
         if( i != 1 ) cout << "autoslice cannot write TIF file "
-                << filecross << endl;
+                << filecross << endl <<"file.write: " << i << endl;
         cout << "depth pix range " << rmin << " to " << rmax << " real" << endl;
     }
 

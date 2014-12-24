@@ -97,6 +97,8 @@ ANY OTHER PROGRAM).
 
 */
 
+#include <err.h>
+#include <errno.h>
 #include <cstdio>  /* ANSI C libraries */
 #include <cstdlib>
 #include <cstring>
@@ -165,17 +167,19 @@ int main()
 
     /*  Get input file name etc. */
     printf("Name of file with input crystal data :\n");
-    ns = scanf("%s", filein);
+    ns = sscanf("graphene.xyz","%s", filein);
 
     printf("Name of file to get binary output"
           " of atomic potential :\n");
-    ns = scanf("%s", fileot);
+    ns = sscanf("graphene.out","%s", fileot);
 
     printf("Real space dimensions in pixels Nx, Ny :\n");
-    ns = scanf("%d %d", &nx, &ny);
+//    ns = scanf("%d %d", &nx, &ny);
+    nx = 512;
+    ny = 512;
 
     printf("Replicate unit cell by NCELLX,NCELLY,NCELLZ :\n");
-    ns = scanf("%d %d %d", &ncellx, &ncelly, &ncellz);
+    ns = sscanf("20 20 2", "%d %d %d", &ncellx, &ncelly, &ncellz);
     if( ncellx < 1 ) ncellx = 1;
     if( ncelly < 1 ) ncelly = 1;
     if( ncellz < 1 ) ncellz = 1;
@@ -187,7 +191,11 @@ int main()
    - this should get a different random number sequence each time the
       program is run 
 */
-    lwobble = askYN( "Do you want to add thermal displacements to atomic coord.?" );
+ 
+lwobble = 0;
+temperature = 300;
+
+/*    lwobble = askYN( "Do you want to add thermal displacements to atomic coord.?" );
     if( lwobble == 1 ) {
         printf("Temperature in degrees K:\n");
         ns = scanf("%lg", &temperature);
@@ -198,7 +206,7 @@ int main()
             ns = scanf("%ld", &iseed);
         } else
             printf( "Random number seed initialized to %ld\n", iseed );
-    }
+    }*/
 
 /*  start timer */
 
@@ -212,14 +220,17 @@ int main()
 
     fp = fopen( filein,"r" );
     if( fp == NULL ) {
-        perror(" can't open crystal data input file");
+	err(1, "can't open %s", filein);
+//        perror(" can't open crystal data input file");
         exit(0 );
     }
-    ReadLine( fp, cline, NCMAX, filein );
+    ReadLine( fp, cline, NCMAX, "ReadLine1" );
+    ReadLine( fp, cline, NCMAX, "ReadLine1.1" );
     ns = sscanf( cline, "%lf %lf %lf", &ax, &by, &cz);
     printf("2D lattice constants= %f x %f Angstroms\n"
-        " and propagation constant= %f Angstroms\n",
-           ax, by, cz );
+        " and propagation constant= %f Angstroms\n"
+	"sscan retval: %d\nerrno: %d\nfrom: %s\n",
+           ax, by, cz, ns, errno, cline );
     if( (ncellx > 1) || (ncelly > 1) || (ncellz > 1 ) ) {
         ax = ax * ncellx;
         by = by * ncelly;
@@ -229,8 +240,9 @@ int main()
     }
 
     /* read in symmetry operations */
-
-    ReadLine( fp, cline, NCMAX, filein );
+// I don't have an example of this working, so kill it
+   nsym = 0;
+/*    ReadLine( fp, cline, NCMAX, "ReadLine2" );
     ns = sscanf( cline, "%d", &nsym);
     if( nsym > 0 ) {
         symx1 = (float*) malloc1D( nsym, sizeof(float), "symx1" );
@@ -238,11 +250,12 @@ int main()
         symy1 = (float*) malloc1D( nsym, sizeof(float), "symy1" );
         symy2 = (float*) malloc1D( nsym, sizeof(float), "symy2" );
         for( i=0; i<nsym; i++)  {
-            ReadLine( fp, cline, NCMAX, filein );
+            ReadLine( fp, cline, NCMAX, "ReadLine3" );
             ns = sscanf( cline, "%f %f %f %f",
                 &symx1[i], &symx2[i], &symy1[i], &symy2[i]);
        }
-    }
+    }*/
+
 
 /*  Calculate misc constants (Nx*Ny added because FFT2D
     performs scaling) also adjust k2max for circular symmetry
@@ -298,16 +311,17 @@ int main()
     total2 = 0.0;
     printf("\n");
 More:
-        ReadLine( fp, cline, NCMAX, filein );
+        ReadLine( fp, cline, NCMAX, "ReadLine4" );
         iz = -1;    /* reset because some machines leave last value */
         ns = sscanf( cline, "%d", &iz);
         if( (strlen(cline) > 1) && (iz >= 1) && (iz <= NZMAX) ) {
             j = 0;
             total1 = 0.0;
-            while( ReadLine( fp, cline, NCMAX, filein ) > 2 ) {
+            while( ReadLine( fp, cline, NCMAX, "ReadLine5" ) > 2 ) {
                 ns = sscanf( cline, "%f %f %f %f", &occ[j], &x[j], &y[j], &wobble[j] );
                 total1 = total1 +  occ[j] * (nsym+1) * ncellx * ncelly;
-                if( nsym > 0) {
+printf("total1: %lf\n", total1);
+                /*if( nsym > 0) {
                     if( (j+nsym+1) > NAMAX) {
                         printf("Too many atoms\n");
                         printf("  Maximum allowed = %d\n",NAMAX);
@@ -321,7 +335,7 @@ More:
                         x[j+jj+1] = (symx1[jj]*x[j] +symx2[jj] )/ncellx;
                         y[j+jj+1] = (symy1[jj]*y[j] +symy2[jj] )/ncelly;
                     }
-                }
+                } */
  
                 x[j] = x[j] /ncellx;
                 y[j] = y[j] /ncelly;
@@ -431,12 +445,12 @@ More:
 
     /*  output results and find min and max to echo */
 
-    if( nsym > 0 ) {
+/*    if( nsym > 0 ) {
         free( symx1 );
         free( symx2 );
         free( symy1 );
         free( symy2 );
-    }
+    }*/
 
     /*  copy to floatTIFF pix to output with */
     myFile.resize( nx, ny );
@@ -495,9 +509,13 @@ int ReadLine( FILE* fpRead, char* cRead, int cMax, const char *mesg )
 {
     std::string stemp;
     if( fgets( cRead, cMax, fpRead) == NULL ) {
-        stemp= "error reading input file: " + std::string(mesg);
-        messageSL( stemp.c_str(), 2 );
-        exit( 0 );
+	if( feof(fpRead) != 0)
+		return 0;
+	else {
+        	stemp= "error reading input file: " + std::string(mesg);
+        	messageSL( stemp.c_str(), 2 );
+        	exit( 0 );
+	}
     }
     return( (int) strlen( cRead ) );
 
